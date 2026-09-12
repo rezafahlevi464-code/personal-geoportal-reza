@@ -17,7 +17,6 @@ services:
       - INITIAL_MEMORY=512m
       - MAXIMUM_MEMORY=2048m
       - GEOSERVER_ADMIN_USER=admin
-      # Diisi dari .env supaya kata sandi tidak tertulis di repository public.
       - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
       - GEOSERVER_CORS_ENABLED=true
       - GEOSERVER_CORS_ALLOWED_ORIGINS=*
