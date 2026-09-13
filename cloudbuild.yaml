@@ -1,32 +1,38 @@
 steps:
   # 1. Build image dari Dockerfile
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'build'
-      - '-t'
-      - 'asia-southeast2-docker.pkg.dev/project-2cd93730-d9d7-41ee-820/katalog-images/nextjs-app:latest'
-      - '.'
+      - "build"
+      - "-t"
+      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/katalog-images/${_IMAGE_NAME}:latest"
+      - "."
 
   # 2. Push image ke Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: "gcr.io/cloud-builders/docker"
     args:
-      - 'push'
-      - 'asia-southeast2-docker.pkg.dev/project-2cd93730-d9d7-41ee-820/katalog-images/nextjs-app:latest'
+      - "push"
+      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/katalog-images/${_IMAGE_NAME}:latest"
 
-  # 3. SSH ke VM, pull image terbaru, restart container nextjs
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
+  # 3. SSH ke VM, isi NEXTJS_IMAGE, tarik image, jalankan container
+  - name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
     args:
-      - '-c'
+      - "-c"
       - |
-        gcloud compute ssh latihan-web-gis \
-          --zone=asia-southeast2-b \
+        gcloud compute ssh ${_VM_NAME} \
+          --zone=${_VM_ZONE} \
           --tunnel-through-iap \
           --quiet \
-          --command="gcloud auth configure-docker asia-southeast2-docker.pkg.dev --quiet && cd /home/matiurari0/app && docker compose pull nextjs && docker compose up -d nextjs"
+          --command="set -e && \
+            cd ${_VM_APP_DIR} && \
+            sudo gcloud auth configure-docker asia-southeast2-docker.pkg.dev --quiet && \
+            sudo sed -i 's|^NEXTJS_IMAGE=.*|NEXTJS_IMAGE=asia-southeast2-docker.pkg.dev/$PROJECT_ID/katalog-images/${_IMAGE_NAME}:latest|' .env && \
+            sudo -H docker compose pull nextjs && \
+            sudo -H docker compose up -d && \
+            sudo -H docker compose ps"
 
 images:
-  - 'asia-southeast2-docker.pkg.dev/project-2cd93730-d9d7-41ee-820/katalog-images/nextjs-app:latest'
+  - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/katalog-images/${_IMAGE_NAME}:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY
